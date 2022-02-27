@@ -45,7 +45,6 @@ contract DAO is AccessControl {
 
     struct _Participant {
         uint256 providedFunds;
-        uint256 maxVote;
         uint256[] votingParticipation;
     }
     // ERC20 token
@@ -58,6 +57,8 @@ contract DAO is AccessControl {
     uint256 public proposalDuration;
     uint256 public requisiteMajority;
     uint256 private proposalsCount;
+    uint256 private precision;
+
 
     // mappings
     mapping(uint256 => _ProposalData) private proposals;
@@ -67,10 +68,10 @@ contract DAO is AccessControl {
 
     // events
     event Deposit(address _from, uint256 _amount);
+    event Withdraw(address _to, uint256 _amount);
     event ProposalAdded(uint256 _id, uint256 _startTime, uint256 _endTime, address _recipient, string _description);
     event Voted(address _from, uint256 _id, uint256 _amount, Decision _decision);
-//    event ProposalTallied(uint256 proposalID, uint256 votesSupport, uint256 votesAgainst, uint256 quorum, bool active);
-//    event Payment(address indexed sender, uint256 amount);
+    event ProposalFinished(uint256 _id, ProposalStatus _status, bool _isQuorumPassed, bool _isMajorityPassed);
 
     constructor (address _Token, uint256 _minBalance, uint256 _minimumQuorum, uint256 _proposalDuration, uint256 _requisiteMajority) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -79,6 +80,7 @@ contract DAO is AccessControl {
         minimumQuorum = _minimumQuorum;
         proposalDuration = _proposalDuration;
         requisiteMajority = _requisiteMajority;
+        precision = TokenDAO.decimals();
     }
 
     // view functions
@@ -96,6 +98,31 @@ contract DAO is AccessControl {
         user.providedFunds += _amount;
         totalProvided += _amount;
         emit Deposit(msg.sender, _amount);
+    }
+
+    // withdraw function
+    function withdraw(uint256 _amount) external {
+        require(_amount > 0, "DAO: amount must be positive value");
+        _Participant storage user = participants[msg.sender];
+        require(_amount <= user.providedFunds, "DAO: amount must be less or equal then provided funds");
+        uint256 locked;
+        for (uint256 i = 0; i < user.votingParticipation.length; i++) {
+            uint256 _id = user.votingParticipation[i];
+            _ProposalData storage currentProposal = proposals[_id];
+            if (currentProposal.data.status == ProposalStatus.PROGRESS) {
+                uint256 voteAmount = currentProposal.votes[msg.sender].amount;
+                if (voteAmount > locked) {
+                    locked = voteAmount;
+                }
+            } else if (_id != 0) {
+                user.votingParticipation[i] = 0;
+            }
+        }
+        require(user.providedFunds - _amount >= locked, "DAO: amount must be less then locked");
+        user.providedFunds -= _amount;
+        TokenDAO.transfer(msg.sender, _amount);
+        totalProvided -= _amount;
+        emit Withdraw(msg.sender, _amount);
     }
 
 
@@ -147,13 +174,52 @@ contract DAO is AccessControl {
         emit Voted(msg.sender, _id, _amount, _decision);
     }
 
+    // finish proposal function
+    function finishProposal(uint256 _id) public payable {
+        require(_id > 0 && _id <= proposalsCount, "DAO: proposal with this ID doesn't exist");
+        _ProposalData storage currentProposal = proposals[_id];
+        require(currentProposal.data.endTime <= block.timestamp, "DAO: the voting has not been completed yet");
+        require(
+            currentProposal.data.status == ProposalStatus.PROGRESS,
+            "DAO: already finished"
+        );
+        bool isQuorumPassed = _isQuorumPassed(_id);
+        bool isMajorityPassed = _isMajorityPassed(_id);
+        if (isQuorumPassed && isMajorityPassed) {
+//            (bool sent,) = currentOffer.owner.call{value : price}("");
+            (bool sent,) = currentProposal.data.recipient.call(currentProposal.data.callData);
+            require(sent, "transaction failedd");
+            currentProposal.data.status = ProposalStatus.SUCCESS;
+            emit ProposalFinished(_id, ProposalStatus.SUCCESS, isQuorumPassed, isMajorityPassed);
+
+        } else {
+            currentProposal.data.status = ProposalStatus.REJECTED;
+            emit ProposalFinished(_id, ProposalStatus.REJECTED, isQuorumPassed, isMajorityPassed);
+        }
+    }
 
     // utility functions
 
     function _getMemberPart(address _user) view internal returns (uint256) {
-        require(totalProvided > 0, "DAO: totalProvided amount eqaul to zero");
         _Participant memory currentUser = participants[_user];
-        uint256 result = currentUser.providedFunds * 100 / totalProvided;
-        return result;
+        if (totalProvided > 0) {
+            return currentUser.providedFunds * 100 / totalProvided;
+        }
+        return 0;
+    }
+    function _isQuorumPassed(uint256 _id) view internal returns (bool) {
+        _ProposalData storage currentProposal = proposals[_id];
+        if (totalProvided > 0) {
+            return uint256(currentProposal.data.votesCount * 100 / totalProvided) >= minimumQuorum;
+        }
+        return false;
+    }
+    function _isMajorityPassed(uint256 _id) view internal returns (bool) {
+        _ProposalData storage currentProposal = proposals[_id];
+        if (currentProposal.data.votesCount > 0 && currentProposal.data.votesFor > 0) {
+            uint256 part = uint256((currentProposal.data.votesFor - 1) * 100 / currentProposal.data.votesCount);
+            return part >= requisiteMajority;
+        }
+        return false;
     }
 }

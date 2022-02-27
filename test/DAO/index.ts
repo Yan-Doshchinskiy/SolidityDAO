@@ -7,6 +7,8 @@ import viewFunctions from "./DAOviewFunctions";
 import depositFunctions from "./DAOdepositFunctions";
 import proposalsAddFunctions from "./DAOproposalsAddFunctions";
 import proposalsVoteFunctions from "./DAOproposalsVoteFunctions";
+import proposalsFinishFunctions from "./DAOproposalsFinishFunctions";
+import withdrawFunctions from "./DAOwithdrawFunctions";
 import zavodArguments, {
   VehicleColor,
   VehicleType,
@@ -30,12 +32,15 @@ export default describe("DAO contract testing", async function () {
     this.burnAmount = "400000000000000000000";
     this.depositAmount = "300000000000000000000";
     this.depositAmount2 = "150000000000000000000";
+    this.withdrawAmount = "200000000000000000000";
+    this.withdrawAmount2 = "100000000000000000000";
+    this.withdrawAmount3 = "600000000000000000000";
     this.voteAmount1 = "100000000000000000000";
     this.voteAmount2 = "120000000000000000000";
     this.testType = VehicleType.CAR;
     this.testColor = VehicleColor.BLUE;
     this.testPrice = "200000000000000000000";
-    this.testRecipient = this.user1.address;
+    this.testRecipient = this.owner.address;
     this.testDescription = "Test Description";
   });
   beforeEach(async function () {
@@ -70,6 +75,8 @@ export default describe("DAO contract testing", async function () {
   });
   viewFunctions();
   depositFunctions();
+  withdrawFunctions();
   proposalsAddFunctions();
   proposalsVoteFunctions();
+  proposalsFinishFunctions();
 });

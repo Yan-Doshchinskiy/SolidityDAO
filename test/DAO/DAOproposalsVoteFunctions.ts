@@ -150,27 +150,6 @@ export default (): void => {
         .vote(_id, this.voteAmount1, Decision.FOR)
     ).to.be.revertedWith("DAO: the voting is over");
   });
-  it(`DAO-VOTE: vote function works correctly (reverted with "DAO: totalProvided amount eqaul to zero")`, async function (): Promise<void> {
-    const callData = this.instanceZavod.interface.encodeFunctionData(
-      "changeTransportType",
-      [this.testType]
-    );
-    const tx = await this.instanceDAO.addProposal(
-      callData,
-      this.testRecipient,
-      this.testDescription
-    );
-    const { events } = await tx.wait();
-    const event = events.find(
-      (singleEvent: any) => singleEvent.event === "ProposalAdded"
-    );
-    const { _id } = event.args;
-    await expect(
-      this.instanceDAO
-        .connect(this.user1)
-        .vote(_id, this.voteAmount1, Decision.FOR)
-    ).to.be.revertedWith("DAO: totalProvided amount eqaul to zero");
-  });
   it(`DAO-VOTE: vote function works correctly (reverted with "DAO: the balance is less than the threshold value" if less)`, async function (): Promise<void> {
     await this.instanceToken.mint(this.user1.address, this.depositAmount);
     await this.instanceToken
