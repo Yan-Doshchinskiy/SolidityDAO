@@ -3,10 +3,16 @@ import hre, { ethers, artifacts, waffle } from "hardhat";
 import { Artifact } from "hardhat/types";
 import erc20Arguments from "../../arguments/ERC20";
 import daoArguments from "../../arguments/DAO";
-import viewFunctions from "./viewFunctions";
-import depositFunctions from "./depositFunctions";
+import viewFunctions from "./DAOviewFunctions";
+import depositFunctions from "./DAOdepositFunctions";
+import proposalsAddFunctions from "./DAOproposalsAddFunctions";
+import proposalsVoteFunctions from "./DAOproposalsVoteFunctions";
+import zavodArguments, {
+  VehicleColor,
+  VehicleType,
+} from "../../arguments/Zavod";
 
-export default describe("ERC20 contract testing", async function () {
+export default describe("DAO contract testing", async function () {
   before(async function () {
     this.ethers = ethers;
     this.hre = hre;
@@ -14,7 +20,7 @@ export default describe("ERC20 contract testing", async function () {
       await ethers.getSigners();
     [
       this.tokenAddress,
-      this.minMemberBalance,
+      this.threshold,
       this.minimumQuorum,
       this.proposalDuration,
       this.requisiteMajority,
@@ -23,6 +29,14 @@ export default describe("ERC20 contract testing", async function () {
     this.smallMintAmount = "50000000000000000000";
     this.burnAmount = "400000000000000000000";
     this.depositAmount = "300000000000000000000";
+    this.depositAmount2 = "150000000000000000000";
+    this.voteAmount1 = "100000000000000000000";
+    this.voteAmount2 = "120000000000000000000";
+    this.testType = VehicleType.CAR;
+    this.testColor = VehicleColor.BLUE;
+    this.testPrice = "200000000000000000000";
+    this.testRecipient = this.user1.address;
+    this.testDescription = "Test Description";
   });
   beforeEach(async function () {
     // ERC20 token contract deploy
@@ -45,7 +59,17 @@ export default describe("ERC20 contract testing", async function () {
       artifactEthToken,
       this.daoArguments
     );
+    // Zavod contract
+    this.zavodArguments = zavodArguments;
+    const artifactZavod: Artifact = await artifacts.readArtifact("Zavod");
+    this.instanceZavod = await waffle.deployContract(
+      this.owner,
+      artifactZavod,
+      this.zavodArguments
+    );
   });
   viewFunctions();
   depositFunctions();
+  proposalsAddFunctions();
+  proposalsVoteFunctions();
 });

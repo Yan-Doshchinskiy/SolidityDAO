@@ -19,7 +19,7 @@ interface IConfig extends HardhatUserConfig {
 
 const reportGas = process.env.REPORT_GAS === "true";
 const ethApiKey = process.env.RINKEBY_API_KEY as string;
-const bscApiKey = process.env.BSC_TEST_API_KEY as string;
+const daoTokenERC20 = process.env.DAO_TOKEN_ADDRESS as string;
 
 type IEnvItem = { value: string | number | undefined; key: string };
 
@@ -28,10 +28,7 @@ const requiredEnvs: Array<IEnvItem> = [
   { value: process.env.RINKEBY_CHAIN_URL, key: "RINKEBY_CHAIN_URL" },
   { value: process.env.RINKEBY_CHAIN_ID, key: "RINKEBY_CHAIN_ID" },
   { value: process.env.RINKEBY_PRIVATE_KEY, key: "RINKEBY_PRIVATE_KEY" },
-  { value: bscApiKey, key: "BSC_TEST_API_KEY" },
-  { value: process.env.BSC_TEST_CHAIN_URL, key: "BSC_TEST_CHAIN_URL" },
-  { value: process.env.BSC_TEST_CHAIN_ID, key: "BSC_TEST_CHAIN_ID" },
-  { value: process.env.BSC_TEST_PRIVATE_KEY, key: "BSC_TEST_PRIVATE_KEY" },
+  { value: daoTokenERC20, key: "DAO_TOKEN_ADDRESS" },
 ];
 
 requiredEnvs.forEach((item: IEnvItem): void => {

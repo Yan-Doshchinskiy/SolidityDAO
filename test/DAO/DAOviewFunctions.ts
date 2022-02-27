@@ -7,22 +7,22 @@ export default (): void => {
   });
   it(`DAO-VIEW: dao token address equal to constructor argument`, async function (): Promise<void> {
     const address = await this.instanceDAO.TokenDAO();
-    expect(address).to.equal(this.daoArguments[0]);
+    expect(address).to.equal(this.tokenAddress);
   });
-  it(`DAO-VIEW: minMemberBalance equal to constructor argument`, async function (): Promise<void> {
-    const minMemberBalance = await this.instanceDAO.minMemberBalance();
-    expect(minMemberBalance).to.equal(this.daoArguments[1]);
+  it(`DAO-VIEW: threshold equal to constructor argument`, async function (): Promise<void> {
+    const threshold = await this.instanceDAO.threshold();
+    expect(threshold).to.equal(this.threshold);
   });
   it(`DAO-VIEW: minimumQuorum equal to constructor argument`, async function (): Promise<void> {
     const quorum = await this.instanceDAO.minimumQuorum();
-    expect(quorum).to.equal(this.daoArguments[2]);
+    expect(quorum).to.equal(this.minimumQuorum);
   });
   it(`DAO-VIEW: proposalDuration equal to constructor argument`, async function (): Promise<void> {
     const duration = await this.instanceDAO.proposalDuration();
-    expect(duration).to.equal(this.daoArguments[3]);
+    expect(duration).to.equal(this.proposalDuration);
   });
   it(`DAO-VIEW: requisiteMajority equal to constructor argument`, async function (): Promise<void> {
     const majority = await this.instanceDAO.requisiteMajority();
-    expect(majority).to.equal(this.daoArguments[4]);
+    expect(majority).to.equal(this.requisiteMajority);
   });
 };
